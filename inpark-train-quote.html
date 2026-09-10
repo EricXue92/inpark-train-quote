@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>inPARK 小火车 · 小程序收款功能报价单</title>
+<style>
+  :root{
+    --pine:#1E4A38;
+    --leaf:#3E8E5F;
+    --signal:#F2B705;
+    --paper:#F7F6F0;
+    --card:#FFFFFF;
+    --ink:#242B26;
+    --ink-soft:#5C665F;
+    --line:#DDDDD2;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.75;
+    font-size:15px;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:0 24px 72px;}
+
+  /* ── 票据式页眉 ── */
+  header{
+    background:var(--pine);
+    color:#F3F1E4;
+    padding:48px 0 0;
+  }
+  .head-inner{max-width:880px;margin:0 auto;padding:0 24px;}
+  .doc-tag{
+    display:inline-block;
+    border:1px solid rgba(243,241,228,.45);
+    border-radius:3px;
+    padding:2px 12px;
+    font-size:13px;
+    letter-spacing:.15em;
+    margin-bottom:20px;
+  }
+  h1{
+    font-size:clamp(26px,4.5vw,38px);
+    font-weight:700;
+    letter-spacing:.02em;
+    line-height:1.35;
+  }
+  h1 small{
+    display:block;
+    font-size:15px;
+    font-weight:400;
+    color:rgba(243,241,228,.75);
+    margin-top:10px;
+    letter-spacing:.05em;
+  }
+  .head-meta{
+    display:flex;flex-wrap:wrap;gap:8px 32px;
+    font-size:13px;color:rgba(243,241,228,.8);
+    margin-top:22px;
+  }
+
+  /* 线路图：核心业务流程 */
+  .route{
+    margin-top:36px;
+    background:rgba(0,0,0,.18);
+    padding:26px 24px 30px;
+  }
+  .route-title{font-size:13px;color:var(--signal);letter-spacing:.2em;margin-bottom:18px;}
+  .route-line{
+    display:flex;align-items:flex-start;justify-content:space-between;
+    position:relative;max-width:640px;
+  }
+  .route-line::before{
+    content:"";
+    position:absolute;top:7px;left:8%;right:8%;
+    border-top:2px dashed rgba(243,241,228,.4);
+  }
+  .stop{position:relative;text-align:center;flex:1;}
+  .stop .dot{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--signal);
+    border:3px solid var(--pine);
+    box-shadow:0 0 0 2px var(--signal);
+    margin:0 auto 12px;position:relative;z-index:1;
+  }
+  .stop .name{font-size:14px;font-weight:600;}
+  .stop .desc{font-size:12px;color:rgba(243,241,228,.65);margin-top:2px;}
+
+  /* 车票撕边过渡 */
+  .tear{
+    height:22px;background:var(--pine);position:relative;
+  }
+  .tear::after{
+    content:"";position:absolute;left:0;right:0;bottom:-1px;height:22px;
+    background:
+      radial-gradient(circle at 11px -6px, transparent 14px, var(--paper) 15px);
+    background-size:22px 22px;
+    background-repeat:repeat-x;
+  }
+
+  /* ── 正文 ── */
+  section{margin-top:56px;}
+  h2{
+    font-size:21px;font-weight:700;color:var(--pine);
+    display:flex;align-items:baseline;gap:12px;
+    margin-bottom:6px;
+  }
+  h2 .no{
+    font-size:13px;font-weight:600;color:var(--leaf);
+    border:1.5px solid var(--leaf);border-radius:50%;
+    width:26px;height:26px;flex:none;
+    display:inline-flex;align-items:center;justify-content:center;
+    transform:translateY(-2px);
+  }
+  .sec-note{color:var(--ink-soft);font-size:14px;margin-bottom:22px;}
+
+  table{
+    width:100%;border-collapse:collapse;background:var(--card);
+    border:1px solid var(--line);font-size:14px;
+  }
+  th{
+    text-align:left;background:#EDEDE3;color:var(--pine);
+    font-weight:600;padding:11px 16px;border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  td{padding:11px 16px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  td.fee{white-space:nowrap;font-weight:600;font-variant-numeric:tabular-nums;}
+  td .sub{color:var(--ink-soft);font-size:13px;}
+
+  /* 方案卡：竖排车票 */
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .plan{
+    background:var(--card);border:1px solid var(--line);
+    display:flex;flex-direction:column;
+    position:relative;
+  }
+  .plan-head{
+    padding:18px 20px 14px;
+    border-bottom:2px dashed var(--line);
+    position:relative;
+  }
+  .plan-head::before,.plan-head::after{
+    content:"";position:absolute;bottom:-9px;width:18px;height:18px;
+    border-radius:50%;background:var(--paper);border:1px solid var(--line);
+  }
+  .plan-head::before{left:-10px;clip-path:inset(0 0 0 50%);}
+  .plan-head::after{right:-10px;clip-path:inset(0 50% 0 0);}
+  .plan-label{font-size:13px;color:var(--ink-soft);}
+  .plan-name{font-size:17px;font-weight:700;color:var(--pine);margin-top:2px;}
+  .plan-price{
+    font-size:22px;font-weight:700;color:var(--ink);
+    margin-top:10px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+  }
+  .plan-price em{font-style:normal;font-size:13px;font-weight:400;color:var(--ink-soft);margin-left:6px;}
+  .plan-body{padding:16px 20px 20px;flex:1;display:flex;flex-direction:column;}
+  .plan-body ul{list-style:none;flex:1;}
+  .plan-body li{
+    font-size:13.5px;padding:5px 0 5px 20px;position:relative;color:var(--ink);
+  }
+  .plan-body li::before{
+    content:"";position:absolute;left:2px;top:13px;
+    width:7px;height:7px;border-radius:50%;background:var(--leaf);
+  }
+  .plan-body li.minus::before{background:#C9C9BC;}
+  .plan-body li.minus{color:var(--ink-soft);}
+  .plan-time{
+    margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+    font-size:13px;color:var(--ink-soft);
+  }
+  .plan.pick{border:2px solid var(--leaf);}
+  .plan.pick .ribbon{
+    position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+    background:var(--signal);color:var(--pine);
+    font-size:12px;font-weight:700;letter-spacing:.1em;
+    padding:2px 14px;border-radius:3px;white-space:nowrap;
+  }
+
+  /* 建议与提醒 */
+  .advice{
+    background:var(--card);border-left:4px solid var(--leaf);
+    border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:22px 26px;
+  }
+  .advice p+p{margin-top:12px;}
+  .warn{
+    background:#FCF6E3;border-left:4px solid var(--signal);
+    padding:22px 26px;margin-top:20px;
+    border-top:1px solid #EBE2C4;border-right:1px solid #EBE2C4;border-bottom:1px solid #EBE2C4;
+  }
+  .warn strong{color:#8A6A00;}
+  .warn p+p{margin-top:12px;}
+
+  /* 总报价对比区 */
+  .totals{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .total{
+    background:var(--card);border:1px solid var(--line);
+    padding:22px 22px 20px;position:relative;
+    display:flex;flex-direction:column;
+  }
+  .total.pick{border:2px solid var(--pine);background:#F2F6F0;}
+  .total.pick .ribbon{
+    position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+    background:var(--signal);color:var(--pine);
+    font-size:12px;font-weight:700;letter-spacing:.1em;
+    padding:2px 14px;border-radius:3px;white-space:nowrap;
+  }
+  .total-tier{font-size:14px;font-weight:600;color:var(--leaf);}
+  .total-name{font-size:17px;font-weight:700;color:var(--pine);margin-top:2px;}
+  .total-onprice{
+    font-size:30px;font-weight:700;color:var(--ink);
+    margin-top:14px;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.2;
+  }
+  .total-onprice em{font-style:normal;font-size:13px;font-weight:400;color:var(--ink-soft);margin-left:4px;}
+  .total-range{font-size:13px;color:var(--ink-soft);margin-top:4px;}
+  .total-inc{
+    margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);
+    font-size:13.5px;flex:1;
+  }
+  .total-next{
+    margin-top:14px;padding-top:10px;border-top:1px solid var(--line);
+    font-size:13px;color:var(--ink-soft);
+  }
+  .totals-fine{
+    margin-top:16px;font-size:13px;color:var(--ink-soft);
+    padding-left:18px;position:relative;
+  }
+  .totals-fine::before{
+    content:"※";position:absolute;left:0;top:0;color:var(--signal);
+  }
+
+  footer{
+    margin-top:64px;padding-top:22px;border-top:2px solid var(--pine);
+    display:flex;flex-wrap:wrap;gap:8px 32px;justify-content:space-between;
+    font-size:13px;color:var(--ink-soft);
+  }
+
+  @media (max-width:720px){
+    .plans,.totals{grid-template-columns:1fr;}
+    .route-line{flex-wrap:wrap;gap:18px 0;}
+    .route-line::before{display:none;}
+    .stop{flex:1 1 50%;}
+    th,td{padding:9px 10px;}
+  }
+  @media print{
+    header,.tear{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body{background:#fff;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-inner">
+    <span class="doc-tag">报 价 单</span>
+    <h1>观光小火车 · 微信小程序收款功能
+      <small>北京六环高线公园 inPARK 项目</small>
+    </h1>
+    <div class="head-meta">
+      <span>报价日期：2026 年 9 月 10 日</span>
+      <span>有效期：30 天</span>
+      <span>币种：人民币（元）</span>
+    </div>
+  </div>
+  <div class="route">
+    <div class="head-inner" style="padding:0;">
+      <div style="max-width:880px;margin:0 auto;padding:0 24px;">
+        <div class="route-title">核心业务流程</div>
+        <div class="route-line">
+          <div class="stop"><div class="dot"></div><div class="name">扫码进入</div><div class="desc">现场码 / 分享</div></div>
+          <div class="stop"><div class="dot"></div><div class="name">选票付款</div><div class="desc">微信支付</div></div>
+          <div class="stop"><div class="dot"></div><div class="name">出电子票</div><div class="desc">二维码票券</div></div>
+          <div class="stop"><div class="dot"></div><div class="name">现场核销</div><div class="desc">员工扫码</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="tear"></div>
+
+<div class="wrap">
+
+  <section>
+    <h2><span class="no">一</span>总报价 · 三档标准</h2>
+    <p class="sec-note">首年一口价打包：开发费 + 小程序认证 + 服务器等首年固定费用，一个数字对外报。</p>
+    <div class="totals">
+
+      <div class="total">
+        <div class="total-tier">经济版</div>
+        <div class="total-name">SaaS 模板</div>
+        <div class="total-onprice">5,000<em>元 / 首年</em></div>
+        <div class="total-range">区间参考：3,000 – 7,000 元</div>
+        <div class="total-inc">SaaS 平台年费 + 小程序认证 300 元 + 基础配置协助</div>
+        <div class="total-next">次年起：约 2,500 – 6,500 元 / 年（续费 + 认证）</div>
+      </div>
+
+      <div class="total pick">
+        <span class="ribbon">推荐</span>
+        <div class="total-tier">标准版</div>
+        <div class="total-name">定制开发 · 基础</div>
+        <div class="total-onprice">26,800<em>元 / 首年</em></div>
+        <div class="total-range">区间参考：18,000 – 35,000 元</div>
+        <div class="total-inc">定制开发（购票、支付、电子票、核销、后台、退款）+ 认证 + 云服务器 + 消息通知首年费用</div>
+        <div class="total-next">次年起：约 3,000 – 8,000 元 / 年（维护 + 服务器 + 认证）</div>
+      </div>
+
+      <div class="total">
+        <div class="total-tier">旗舰版</div>
+        <div class="total-name">定制开发 · 完整</div>
+        <div class="total-onprice">68,000<em>元 / 首年</em></div>
+        <div class="total-range">区间参考：45,000 – 90,000 元</div>
+        <div class="total-inc">标准版全部 + 班次预约、库存限载、会员次卡、优惠券、数据报表、多网点，含首年全部固定费用</div>
+        <div class="total-next">次年起：约 6,000 – 12,000 元 / 年</div>
+      </div>
+
+    </div>
+    <p class="totals-fine">三档均不含微信支付手续费（交易额的 0.6%，从每笔流水中直接扣除，无需另付）。如需分账功能，标准版与旗舰版各加 3,000 – 5,000 元。一口价取区间中位数，已预留议价空间。</p>
+  </section>
+
+  <section>
+    <h2><span class="no">二</span>固定成本</h2>
+    <p class="sec-note">无论选择哪种开发方案，以下费用都省不掉。</p>
+    <table>
+      <thead>
+        <tr><th style="width:34%">项目</th><th style="width:24%">费用</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>微信小程序认证费</td>
+          <td class="fee">300 元 / 年</td>
+          <td>必须以企业主体认证，才能开通微信支付</td>
+        </tr>
+        <tr>
+          <td>微信支付手续费</td>
+          <td class="fee">交易额 × 0.6%</td>
+          <td>官方标准费率；部分行业可申请 0.2%–0.38% 优惠费率</td>
+        </tr>
+        <tr>
+          <td>服务器 / 云开发</td>
+          <td class="fee">500 – 3,000 元 / 年</td>
+          <td>小体量业务用微信云开发即可，低配够用</td>
+        </tr>
+        <tr>
+          <td>域名 + SSL 证书</td>
+          <td class="fee">100 – 200 元 / 年</td>
+          <td>使用微信云开发可省掉此项</td>
+        </tr>
+        <tr>
+          <td>短信 / 消息通知<span class="sub">（可选）</span></td>
+          <td class="fee">100 – 500 元 / 年</td>
+          <td>核销通知、购票成功提醒</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="no">三</span>开发费用 · 三种方案</h2>
+    <p class="sec-note">按投入从低到高排列，方案 B 为本场景推荐配置。</p>
+    <div class="plans">
+
+      <div class="plan">
+        <div class="plan-head">
+          <div class="plan-label">方案 A</div>
+          <div class="plan-name">SaaS 模板</div>
+          <div class="plan-price">2,000 – 6,000<em>元 / 年</em></div>
+        </div>
+        <div class="plan-body">
+          <ul>
+            <li>微盟、有赞或景区票务类 SaaS 产品</li>
+            <li>上线快，稳定，有官方售后</li>
+            <li>适合班次固定、票种简单的场景</li>
+            <li class="minus">界面定制有限</li>
+            <li class="minus">每年需续费，数据在平台方</li>
+          </ul>
+          <div class="plan-time">上线周期：1 – 2 周</div>
+        </div>
+      </div>
+
+      <div class="plan pick">
+        <span class="ribbon">推荐</span>
+        <div class="plan-head">
+          <div class="plan-label">方案 B</div>
+          <div class="plan-name">定制开发 · 基础版</div>
+          <div class="plan-price">15,000 – 30,000<em>元 · 一次性</em></div>
+        </div>
+        <div class="plan-body">
+          <ul>
+            <li>购票下单 + 微信支付</li>
+            <li>电子票二维码</li>
+            <li>工作人员扫码核销</li>
+            <li>订单管理后台</li>
+            <li>退款处理</li>
+          </ul>
+          <div class="plan-time">开发周期：3 – 5 周</div>
+        </div>
+      </div>
+
+      <div class="plan">
+        <div class="plan-head">
+          <div class="plan-label">方案 C</div>
+          <div class="plan-name">定制开发 · 完整版</div>
+          <div class="plan-price">40,000 – 80,000<em>元 · 一次性</em></div>
+        </div>
+        <div class="plan-body">
+          <ul>
+            <li>包含基础版全部功能，另加：</li>
+            <li>分时段预约 / 班次管理</li>
+            <li>库存控制（每班次限载人数）</li>
+            <li>会员、次卡、优惠券</li>
+            <li>数据报表、多网点支持</li>
+          </ul>
+          <div class="plan-time">开发周期：6 – 10 周</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="no">四</span>后续维护</h2>
+    <table>
+      <thead>
+        <tr><th style="width:34%">项目</th><th style="width:24%">费用</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>定制开发年度维护</td>
+          <td class="fee">2,000 – 8,000 元 / 年</td>
+          <td>约为开发费的 10%–15%，含 bug 修复与小幅调整</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="no">五</span>选型建议</h2>
+    <div class="advice">
+      <p>小火车收款这个场景，核心就是页首线路图里的四件事：扫码进入 → 选票付款 → 出电子票 → 现场核销。</p>
+      <p>如果班次固定、票种简单（成人票 / 儿童票），<strong>方案 A 的票务 SaaS 完全够用</strong>，一年几千元就能跑起来。如果 inPARK 项目方对品牌形象有要求、想要自己的界面和数据，再上<strong>方案 B</strong>。</p>
+    </div>
+    <div class="warn">
+      <p><strong>开户提醒：</strong>开通微信支付需要企业营业执照 + 对公账户。个体户也可以开通，但费率和额度略有差别。</p>
+      <p><strong>分账提醒：</strong>如果小火车运营方与园区是分账关系，需使用微信支付"分账功能"。在定制开发中须提前说明，属于加价项，约 <strong>+3,000 – 5,000 元</strong>。</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>本报价为市场行情参考价，具体以承接团队最终合同为准</span>
+    <span>inPARK 小火车 · 小程序收款功能报价单</span>
+  </footer>
+
+</div>
+</body>
+</html>
